@@ -12,6 +12,39 @@ const (
 	tileSize            int32  = 64
 )
 
+func createBackground(renderer *sdl.Renderer) (*sdl.Texture, sdl.Rect) {
+
+	img1, err := img.LoadTexture(renderer, img1Filename)
+	if err != nil {
+		panic(err)
+	}
+	defer img1.Destroy()
+
+	img2, err := img.LoadTexture(renderer, img2Filename)
+	if err != nil {
+		panic(err)
+	}
+	defer img2.Destroy()
+
+	newImg, err := renderer.CreateTexture(sdl.PIXELFORMAT_RGBA8888, sdl.TEXTUREACCESS_TARGET, 120, 120)
+	if err != nil {
+		panic(err)
+	}
+
+	img1Rect := sdl.Rect{0, 0, tileSize, tileSize}
+	img2Rect := sdl.Rect{tileSize, 0, tileSize, tileSize}
+	newTexRect := sdl.Rect{0, 0, winWidth, winHeight}
+
+	renderer.SetRenderTarget(newImg)
+
+	renderer.Copy(img1, &img1Rect, &img1Rect)
+	renderer.Copy(img2, nil, &img2Rect)
+
+	renderer.SetRenderTarget(nil)
+
+	return newImg, newTexRect
+}
+
 func main() {
 	err := sdl.Init(sdl.INIT_EVERYTHING)
 	if err != nil {
@@ -32,33 +65,8 @@ func main() {
 	}
 	defer renderer.Destroy()
 
-	img1, err := img.LoadTexture(renderer, img1Filename)
-	if err != nil {
-		panic(err)
-	}
-	defer img1.Destroy()
-
-	img2, err := img.LoadTexture(renderer, img2Filename)
-	if err != nil {
-		panic(err)
-	}
-	defer img2.Destroy()
-
-	img1Rect := sdl.Rect{0, 0, 60, 60}
-	img2Rect := sdl.Rect{60, 0, 60, 60}
-	newImgRect := sdl.Rect{0, 0, 120, 120}
-
-	newImg, err := renderer.CreateTexture(sdl.PIXELFORMAT_RGBA8888, sdl.TEXTUREACCESS_TARGET, 120, 120)
-	if err != nil {
-		panic(err)
-	}
-	defer newImg.Destroy()
-
-	renderer.SetRenderTarget(newImg)
-	renderer.Copy(img1, nil, &img1Rect)
-	renderer.Copy(img2, nil, &img2Rect)
-
-	renderer.SetRenderTarget(nil)
+	background, backgroundRect := createBackground(renderer)
+	defer background.Destroy()
 
 	for running := true; running != false; {
 		event := sdl.PollEvent()
@@ -67,7 +75,7 @@ func main() {
 			running = false
 		}
 
-		renderer.Copy(newImg, nil, &newImgRect)
+		renderer.Copy(background, nil, &backgroundRect)
 		renderer.Present()
 		renderer.Clear()
 	}
